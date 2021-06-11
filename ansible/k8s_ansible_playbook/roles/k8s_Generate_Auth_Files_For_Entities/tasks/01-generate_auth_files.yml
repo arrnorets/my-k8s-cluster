@@ -1,0 +1,44 @@
+- name: Generate kube-proxy auth config
+  shell: |
+         kubectl config set-cluster {{ k8s_cluster_name }} \
+           --certificate-authority={{ k8s_home }}/certs/own_ca/own_ca.crt \
+           --embed-certs=true \
+           --server=https://{{ k8s_public_ip }}:6443 \
+           --kubeconfig={{ k8s_home }}/kubeconfigs/kube-proxy.kubeconfig
+
+         kubectl config set-credentials system:kube-proxy \
+           --client-certificate={{ k8s_home }}/certs/kube-proxy_key_cert/kube-proxy.crt \
+           --client-key={{ k8s_home }}/certs/kube-proxy_key_cert/kube-proxy.key \
+           --embed-certs=true \
+           --kubeconfig={{ k8s_home }}/kubeconfigs/kube-proxy.kubeconfig
+
+         kubectl config set-context default \
+           --cluster={{ k8s_cluster_name }} \
+           --user=system:kube-proxy \
+           --kubeconfig={{ k8s_home }}/kubeconfigs/kube-proxy.kubeconfig
+
+         kubectl config use-context default --kubeconfig={{ k8s_home }}/kubeconfigs/kube-proxy.kubeconfig
+  when: item == "kube-proxy"
+
+- name: Generate {{ item }} auth config
+  shell: |
+         kubectl config set-cluster {{ k8s_cluster_name }} \
+           --certificate-authority={{ k8s_home }}/certs/own_ca/own_ca.crt \
+           --embed-certs=true \
+           --server=https://127.0.0.1:6443 \
+           --kubeconfig={{ k8s_home }}/kubeconfigs/{{ item }}.kubeconfig
+
+         kubectl config set-credentials system:{{ item }} \
+           --client-certificate={{ k8s_home }}/certs/{{ item }}_key_cert/{{ item }}.crt \
+           --client-key={{ k8s_home }}/certs/{{ item }}_key_cert/{{ item }}.key \
+           --embed-certs=true \
+           --kubeconfig={{ k8s_home }}/kubeconfigs/{{ item }}.kubeconfig
+
+         kubectl config set-context default \
+           --cluster={{ k8s_cluster_name }} \
+           --user=system:{{ item }} \
+           --kubeconfig={{ k8s_home }}/kubeconfigs/{{ item }}.kubeconfig
+
+         kubectl config use-context default --kubeconfig={{ k8s_home }}/kubeconfigs/{{ item }}.kubeconfig
+  when: item != "kube-proxy"
+

@@ -1,0 +1,59 @@
+- name: Creating directory for {{ item }} entity key-cert storing
+  file:
+    path: "{{ k8s_home }}/certs/{{ item }}_key_cert"
+    state: directory
+    mode: '0700'
+
+- name: Generate an OpenSSL private key for K8s {{ item }} entity
+  openssl_privatekey:
+    path: "{{ k8s_home }}/certs/{{ item }}_key_cert/{{ item }}.key"
+    type: RSA
+    size: 4096
+
+- name: Generate an OpenSSL CSR with Subject information for entity {{ item }}
+  openssl_csr:
+    path: "{{ k8s_home }}/certs/{{ item }}_key_cert/{{ item }}.csr"
+    privatekey_path: "{{ k8s_home }}/certs/{{ item }}_key_cert/{{ item }}.key"
+    country_name: "{{ country_name }}"
+    state_or_province_name: "{{ state_or_province_name }}"
+    organization_name: "{{ organization_name }}"
+    organizational_unit_name: "{{ organizational_unit_name }}"
+    email_address: "{{ email_address }}"
+    common_name: "system:{{ item }}"
+  when: item != "kubernetes" and item != "admin"
+
+- name:  Generate an OpenSSL CSR with Subject information for entity k8s-api
+  openssl_csr:
+    path: "{{ k8s_home }}/certs/{{ item }}_key_cert/{{ item }}.csr"
+    privatekey_path: "{{ k8s_home }}/certs/{{ item }}_key_cert/{{ item }}.key"
+    country_name: "{{ country_name }}"
+    state_or_province_name: "{{ state_or_province_name }}"
+    organization_name: "{{ organization_name }}"
+    organizational_unit_name: "{{ organizational_unit_name }}"
+    email_address: "{{ email_address }}"
+    common_name: "kubernetes" 
+    subject_alt_name: "{{ k8s_subject_alt_names }}"
+  when: item == "kubernetes"
+
+- name:  Generate an OpenSSL CSR with Subject information for entity admin
+  openssl_csr:
+    path: "{{ k8s_home }}/certs/{{ item }}_key_cert/{{ item }}.csr"
+    privatekey_path: "{{ k8s_home }}/certs/{{ item }}_key_cert/{{ item }}.key"
+    country_name: "{{ country_name }}"
+    state_or_province_name: "{{ state_or_province_name }}"
+    organization_name: "{{ organization_name }}"
+    organizational_unit_name: "{{ organizational_unit_name }}"
+    email_address: "{{ email_address }}"
+    common_name: "admin" 
+    subject_alt_name: "{{ k8s_subject_alt_names }}"
+  when: item == "admin"
+
+- name: Generate OpenSSL certificate for K8s {{ item }} entity
+  openssl_certificate:
+    path: "{{ k8s_home }}/certs/{{ item }}_key_cert/{{ item }}.crt"
+    csr_path: "{{ k8s_home }}/certs/{{ item }}_key_cert/{{ item }}.csr"
+    privatekey_path: "{{ k8s_home }}/certs/{{ item }}_key_cert/{{ item }}.key"
+    provider: ownca
+    ownca_path: "{{ k8s_home }}/certs/own_ca/own_ca.crt"
+    ownca_privatekey_path: "{{ k8s_home }}/certs/own_ca/own_ca.key"
+    selfsigned_not_after: +3700d

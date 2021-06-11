@@ -1,0 +1,7 @@
+- name: Creating root directory for Kubelet keys and certs
+  file:
+    path: "{{ k8s_home }}/certs/kubelet_key_cert"
+    state: directory
+    mode: '0700'
+  delegate_to: localhost
+

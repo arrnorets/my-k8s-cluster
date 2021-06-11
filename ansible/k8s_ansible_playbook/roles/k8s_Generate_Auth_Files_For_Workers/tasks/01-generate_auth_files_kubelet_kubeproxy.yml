@@ -1,0 +1,23 @@
+- name: Generate kubelet configs for workers
+  shell: |
+    kubectl config set-cluster {{ k8s_cluster_name }} \
+      --certificate-authority={{ k8s_home }}/certs/own_ca/own_ca.crt \
+      --embed-certs=true \
+      --server=https://{{ k8s_public_ip }}:6443 \
+      --kubeconfig={{ k8s_home }}/kubeconfigs/kubelet/{{ inventory_hostname }}.kubeconfig
+
+    kubectl config set-credentials system:node:{{ inventory_hostname }} \
+      --client-certificate={{ k8s_home }}/certs/kubelet_key_cert/{{ inventory_hostname }}-kubelet.crt \
+      --client-key={{ k8s_home }}/certs/kubelet_key_cert/{{ inventory_hostname }}-kubelet.key \
+      --embed-certs=true \
+      --kubeconfig={{ k8s_home }}/kubeconfigs/kubelet/{{ inventory_hostname }}.kubeconfig
+
+    kubectl config set-context default \
+      --cluster={{ k8s_cluster_name }} \
+      --user=system:node:{{ inventory_hostname }} \
+      --kubeconfig={{ k8s_home }}/kubeconfigs/kubelet/{{ inventory_hostname }}.kubeconfig
+
+    kubectl config use-context default --kubeconfig={{ k8s_home }}/kubeconfigs/kubelet/{{ inventory_hostname }}.kubeconfig
+  
+  delegate_to: localhost
+

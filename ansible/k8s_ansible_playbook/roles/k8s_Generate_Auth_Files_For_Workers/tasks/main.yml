@@ -1,0 +1,3 @@
+---
+- import_tasks: 00-create_root_directory_for_auth_files.yml
+- include_tasks: 01-generate_auth_files_kubelet_kubeproxy.yml

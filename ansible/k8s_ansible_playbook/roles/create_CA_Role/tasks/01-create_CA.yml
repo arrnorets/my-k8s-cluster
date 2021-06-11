@@ -1,0 +1,26 @@
+- name: Creating Root Directory for certs
+  file:
+    path: "{{ cert_rootdir }}"
+    state: directory
+    mode: '0700'
+
+- name: Creating directory for CA certs
+  file:
+    path: "{{ cert_rootdir }}/own_ca"
+    state: directory
+    mode: '0700'
+
+- name: Create your own CA
+  command:
+    argv:
+      - roles/create_CA_Role/files/create_CA.py
+      - "{{ cert_rootdir }}/own_ca"
+      - "{{ ca_country }}"
+      - "{{ ca_state }}"
+      - "{{ locality }}"
+      - "{{ organization }}"
+      - "{{ org_unit }}"
+      - "{{ common_ca_name }}"
+      - "{{ ca_email }}"
+  delegate_to: localhost
+

@@ -1,0 +1,4 @@
+---
+- include_tasks: 01-generate_auth_files.yml
+  with_items: "{{ k8s_common_enitites }}"
+  when: k8s_common_enitites is defined

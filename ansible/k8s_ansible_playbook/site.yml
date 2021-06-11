@@ -1,0 +1,76 @@
+---
+- name: Create own CA cert
+  hosts: localhost
+  strategy: linear
+  vars:
+    cert_rootdir: "/home/syseng/work/k8s_ansible_playbook/certs"
+    ca_country: "RU"
+    ca_state: "Central Russia"
+    locality: "Moscow"
+    organization: "Asgardahost CA Dept"
+    org_unit: "IT"
+    common_ca_name: "jumphost.asgardahost.ru"
+    ca_email: "r.chukov@internet.ru"
+
+    # /* User parameters start here */
+    country_name: "RU"
+    state_or_province_name: "Central Russia, Msk"
+    organization_name: "Asgardahost"
+    organizational_unit_name: "IT"
+    email_address: "r.chukov@asgardahost.ru"
+
+  roles:
+    - create_CA_Role
+
+- name: Create key-cert pairs for enumerated K8S enitites
+  hosts: localhost
+  strategy: linear
+  vars:
+    k8s_home: "/home/syseng/work/k8s_ansible_playbook"
+    k8s_subject_alt_names: "DNS:k8s-cp1.asgardahost.ru,DNS:k8s-cp2.asgardahost.ru,DNS:k8s-cp3.asgardahost.ru,DNS:kubernetes,DNS:kubernetes.default,DNS:kubernetes.default.svc,DNS:kubernetes.default.svc.cluster,DNS:kubernetes.svc.cluster.local,DNS:k8s,DNS:k8s.svc,DNS:k8s.svc.asgardahost,DNS:k8s.svc.asgardahost.ru,IP:10.32.0.1,IP:127.0.0.1,IP:192.168.100.8,IP:192.168.100.9,IP:192.168.100.10"
+    k8s_common_enitites: [ "admin" , "kube-controller-manager", "kube-proxy", "kube-scheduler" , "kubernetes", "service-accounts" ]
+
+  roles:
+    - k8s_Create_Key_Cert_For_Enitites
+
+- name: Create certs for Kubelet running on worker nodes
+  hosts: foreman_k8s_workernode
+  strategy: linear
+  vars:
+    k8s_subject_alt_names: "IP:192.168.100.12,IP:192.168.100.13"
+    k8s_home: "/home/syseng/work/k8s_ansible_playbook"
+
+  roles:
+    - k8s_Create_Kubelet_Certs_For_Worker
+
+- name: Generate K8s kubelet authentication files for workers
+  hosts: foreman_k8s_workernode
+  strategy: linear
+  vars:
+    k8s_home: "/home/syseng/work/k8s_ansible_playbook"
+    k8s_public_ip: "192.168.100.10"
+    k8s_cluster_name: "k8s-asgardahost"
+
+  roles:
+    - k8s_Generate_Auth_Files_For_Workers
+
+- name: Generate K8s auth files for common enitites
+  hosts: localhost
+  strategy: linear
+  vars:
+    k8s_home: "/home/syseng/work/k8s_ansible_playbook"
+    k8s_public_ip: "192.168.100.10"
+    k8s_cluster_name: "k8s-asgardahost"
+    k8s_common_enitites: [ "admin" , "kube-controller-manager", "kube-proxy", "kube-scheduler" ]
+
+  roles:
+    - k8s_Generate_Auth_Files_For_Entities
+
+- name: Create EncryptionConfig description
+  hosts: localhost
+  strategy: linear
+  vars:
+    k8s_home: "/home/syseng/work/k8s_ansible_playbook"
+
+  roles:
+    - k8s_Create_Encryption_Config

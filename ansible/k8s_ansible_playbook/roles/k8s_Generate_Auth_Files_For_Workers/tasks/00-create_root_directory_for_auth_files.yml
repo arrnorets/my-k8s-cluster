@@ -1,0 +1,7 @@
+- name: Creating root directory for Kubelet configs
+  file:
+    path: "{{ k8s_home }}/kubeconfigs/kubelet"
+    state: directory
+    mode: '0700'
+  delegate_to: localhost
+

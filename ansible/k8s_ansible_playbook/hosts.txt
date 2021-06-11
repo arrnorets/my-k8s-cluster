@@ -1,0 +1,8 @@
+[controls]
+k8s-cp1.asgardahost.ru
+k8s-cp2.asgardahost.ru
+k8s-cp3.asgardahost.ru
+
+[workers]
+k8s-node1.asgardahost.ru
+k8s-node2.asgardahost.ru

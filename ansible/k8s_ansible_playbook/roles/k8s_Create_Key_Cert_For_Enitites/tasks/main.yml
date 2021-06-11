@@ -1,0 +1,4 @@
+---
+- include_tasks: 01-key_and_cert_create.yml
+  with_items: "{{ k8s_common_enitites }}"
+  when: k8s_common_enitites is defined

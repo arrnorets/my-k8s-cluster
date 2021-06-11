@@ -1,0 +1,30 @@
+- name: Generate an OpenSSL private key for K8s Kubelet on worker nodes
+  openssl_privatekey:
+    path: "{{ k8s_home }}/certs/kubelet_key_cert/{{ inventory_hostname }}-kubelet.key"
+    type: RSA
+    size: 4096
+  delegate_to: localhost
+
+- name: Generate an OpenSSL Certificate Signing Request with Subject information on worker nodes
+  openssl_csr:
+    path: "{{ k8s_home }}/certs/kubelet_key_cert/{{ inventory_hostname }}-kubelet.csr"
+    privatekey_path: "{{ k8s_home }}/certs/kubelet_key_cert/{{ inventory_hostname }}-kubelet.key"
+    country_name: "{{ country_name }}"
+    state_or_province_name: "{{ state_or_province_name }}"
+    organization_name: system:nodes
+    organizational_unit_name: "{{ organizational_unit_name }}"
+    email_address: "{{ email_address }}"
+    common_name: "system:node:{{ inventory_hostname }}"
+    subject_alt_name: "{{ k8s_subject_alt_names }},DNS:{{ inventory_hostname }}"
+  delegate_to: localhost
+
+- name: Generate OpenSSL certificate for K8s Kubelet on worker nodes
+  openssl_certificate:
+    path: "{{ k8s_home }}/certs/kubelet_key_cert/{{ inventory_hostname }}-kubelet.crt"
+    csr_path: "{{ k8s_home }}/certs/kubelet_key_cert/{{ inventory_hostname }}-kubelet.csr"
+    privatekey_path: "{{ k8s_home }}/certs/kubelet_key_cert/{{ inventory_hostname }}-kubelet.key"
+    provider: ownca
+    ownca_path: "{{ k8s_home }}/certs/own_ca/own_ca.crt"
+    ownca_privatekey_path: "{{ k8s_home }}/certs/own_ca/own_ca.key"
+    selfsigned_not_after: +3700d
+  delegate_to: localhost
